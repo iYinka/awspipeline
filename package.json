@@ -7,7 +7,7 @@
     "scripts": {
         "start": "node App.js",
         "test": "jest",
-        "build": "babel src -d dist",
+        "build": "babel src --out-dir lib",
         "coverage": "nyc npm test -- --coverage --watchAll=false",
         "lint": "eslint ."
     },
@@ -22,6 +22,8 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@babel/cli": "^7.24.8",
+        "@babel/core": "^7.25.2",
         "@babel/eslint-parser": "^7.25.1",
         "@babel/preset-env": "^7.25.4",
         "@babel/preset-react": "^7.24.7",
