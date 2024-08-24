@@ -14,7 +14,7 @@ phases:
       - npm install
   pre_build:
     commands:
-      - echo Running lint.....
+      - echo Running lint...
       - npm run lint || true
 
   build:
