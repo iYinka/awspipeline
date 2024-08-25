@@ -4,9 +4,9 @@ env:
   variables:
     COVERAGE_THRESHOLD: 80
     NODE_ENV: test
-  secrets-manager:
-    GITHUB_TOKEN: gitcodebuild
-    REPO_NAME: iyinka/awspipeline
+  # secrets-manager:
+  #   GITHUB_TOKEN: gitcodebuild
+  #   REPO_NAME: iyinka/awspipeline
 
 phases:
   install:
