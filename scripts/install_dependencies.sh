@@ -11,10 +11,3 @@ npm -v
 
 # Install 'forever' globally
 sudo npm install -g forever
-
-#!/bin/bash
-
-mkdir /home/ec2-user/app
-cd /home/ec2-user/app
-
-sudo npm install
