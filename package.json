@@ -1,5 +1,5 @@
 {
-    "name": "ebatest",
+    "name": "myDaily Blog",
     "version": "1.0.0",
     "description": "AWS CICD using Elastic Beanstalk, CodeBuild and CodePipeline",
     "main": "App.js",
