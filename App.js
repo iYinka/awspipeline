@@ -2,6 +2,7 @@ import express from "express";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import bodyParser from "body-parser";
+import { __express as ejs } from "ejs";
 
 const app = express();
 const port = 3000;
@@ -9,6 +10,11 @@ const port = 3000;
 // Configure Express middleware
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: false }));
+
+// Enable EJS module
+app.set("view engine", "ejs");
+app.engine("ejs", ejs);
+
 
 // Define paths to view files
 const __dirname = dirname(fileURLToPath(import.meta.url));
