@@ -25,6 +25,14 @@ const blogDetailsPath = join(__dirname, "views/blogDetails.ejs");
 // Initialize blog list
 let blogList = [];
 
+
+// AWS Health Check
+// Health check route
+app.get("/health", (req, res) => {
+  res.status(200).send("Healthy");
+});
+
+
 // Render index page
 app.get("/", (req, res) => {
   res.render(indexPath);
