@@ -1,3 +1,3 @@
 #!/bin/bash
-cd /home/root/app
+cd /home/ubuntu/app
 sudo npm i
