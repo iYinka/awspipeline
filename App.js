@@ -27,7 +27,7 @@ let blogList = [];
 
 
 // AWS Health Check
-// Health check route
+// Health check route..............
 app.get("/health", (req, res) => {
   res.status(200).send("Healthy");
 });

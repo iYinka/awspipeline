@@ -20,7 +20,7 @@ phases:
 
   build:
     commands:
-      - echo Running unit tests with coverage........
+      - echo Running unit tests with coverage.....
       - npm run test -- --coverage --coverageReporters=text-summary --watchAll=false
       - echo Comment on PR
       - |
