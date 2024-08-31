@@ -112,7 +112,7 @@ input[type="submit"]:hover {
 }
 
 .form-container {
-  width: 700px;
+  width: 500px;
   margin: 0 auto;
   border-radius: 8px;
   background-color: #f2f2f2;
@@ -121,12 +121,12 @@ input[type="submit"]:hover {
 
 /* home */
 .overflow-div {
-  height: 70vh;
+  height: 50vh;
   overflow-y: auto;
 }
 
 .home-container {
-  width: 800px;
+  width: 600px;
   margin: 0 auto;
 }
 
