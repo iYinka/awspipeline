@@ -1,9 +1,9 @@
 #!/bin/bash
-sudo yum update -y
+sudo apt-get update -y
 
 # Install Node.js using NodeSource repository
-curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
-sudo yum install -y nodejs
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
 
 # Verify installation of Node.js and npm
 node -v
