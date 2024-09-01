@@ -1,3 +1,3 @@
 #!/bin/bash
-cd /home/ubuntu/app
+cd /home/root/app
 forever start App.js
