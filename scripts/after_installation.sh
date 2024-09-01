@@ -1,5 +1,5 @@
 #!/bin/bash
-mkdir /home/root/app
+mkdir /home/ubuntu/app
 
-cd /home/root/app
+cd /home/ubuntu/app
 sudo npm i
