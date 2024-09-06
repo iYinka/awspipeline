@@ -69,7 +69,7 @@ app.post("/delete/:id", (req, res) => {
   res.redirect("/home");
 });
 
-// Render blog details page............
+// Render blog details page....
 app.get("/blogDetails/:id", (req, res) => {
   const blogId = req.params.id;
   const blogDetails = blogList.find((blog) => blog.id === parseInt(blogId));
