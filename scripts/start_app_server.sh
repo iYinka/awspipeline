@@ -1,3 +1,3 @@
 #!/bin/bash
-cd /home/root/app
+cd /home/ec2-user/app
 forever start App.js
