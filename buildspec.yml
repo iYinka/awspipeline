@@ -20,6 +20,15 @@ phases:
 
   build:
     commands:
+      - echo "Extracting PR number from CodeBuild environment..."
+      - |
+        if [[ $CODEBUILD_SOURCE_VERSION == pr/* ]]; then
+          GITHUB_PR_NUMBER=$(echo $CODEBUILD_SOURCE_VERSION | grep -oP '\d+')
+          echo "PR Number: $GITHUB_PR_NUMBER"
+        fi
+      - echo "Repository:: $CODEBUILD_SOURCE_REPO_URL"
+      - GITHUB_REPOSITORY=$(basename -s .git $CODEBUILD_SOURCE_REPO_URL)
+      - echo "Repository:: $GITHUB_REPOSITORY"
       - echo Running unit tests with coverage.....
       - npm run test -- --coverage --coverageReporters=text-summary --watchAll=false
       - echo Comment on PR
