@@ -4,6 +4,9 @@ const bodyParser = require("body-parser");
 const { __express: ejs } = require("ejs");
 const app = express();
 const port = 3000;
+
+
+
 // Configure Express middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 // Set up EJS as the templating engine
@@ -76,5 +79,5 @@ app.post("/edit/:id", (req, res) => {
     res.redirect("/home");
 });
 // Start the server
-app.listen(port, () => console.log(`Listening on port ${port}`));
-module.exports = app; // Export app for testing
+const server = app.listen(port, () => console.log(`Listening on port ${port}`));
+module.exports = { app, server };

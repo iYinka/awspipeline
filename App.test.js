@@ -1,34 +1,23 @@
 const request = require("supertest");
-const app = require("./App.js"); // Import the app instance
+const { app, server } = require("./App.js"); // Import the app and server instance
 
 describe("Express App", () => {
     let originalDateNow;
-    let server = 3001;
 
-    beforeAll(done => {
+    beforeAll(() => {
         originalDateNow = Date.now;
         Date.now = jest.fn(() => 1234567890);
-         server = app.listen(3001, () => {
-             // Use a different port to avoid conflicts
-             console.log("Test server running on port 3001");
-             done();
-         });
     });
 
-    afterAll(done => {
+    afterAll(() => {
         Date.now = originalDateNow;
-    if (server) {
-                server.close(() => {
-                    console.log("Test server closed");
-                    done();
-                });
-            } else {
-                done();
-            }
+        server.close(); // Close the server to prevent Jest from hanging
     });
 
-    afterEach(() => {
-        jest.clearAllTimers(); // Clears all timers
+    test("GET /health returns 200", async () => {
+        const response = await request(app).get("/health");
+        expect(response.status).toBe(200);
+        expect(response.text).toBe("Healthy");
     });
 
     // Your tests go here
