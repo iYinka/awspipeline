@@ -22,7 +22,8 @@ phases:
   build:
     commands:
       - echo Running unit tests with coverage.....
-      - npm run test -- --coverage --coverageReporters=text-summary --watchAll=false | tee coverage.txt
+      - |
+        npm run test -- --coverage --coverageReporters=text-summary --watchAll=false | tee coverage.txt
       - echo "Extracting coverage percentage..."
       - |
         COVERAGE=$(grep -oP 'All files.*\K\d+(\.\d+)?(?=%)' coverage.txt)
@@ -34,9 +35,9 @@ phases:
           GITHUB_PR_NUMBER=$(echo $CODEBUILD_SOURCE_VERSION | grep -oP '\d+')
           echo "PR Number: $GITHUB_PR_NUMBER"
         fi
+
       - echo "Repository: $CODEBUILD_SOURCE_REPO_URL"
-      - |
-        GITHUB_REPOSITORY=$(basename -s .git $CODEBUILD_SOURCE_REPO_URL)
+      - GITHUB_REPOSITORY=$(basename -s .git $CODEBUILD_SOURCE_REPO_URL)
       - echo "Repository: $GITHUB_REPOSITORY"
 
       - echo Commenting on PR based on coverage...
