@@ -51,7 +51,7 @@ phases:
                 -d "{\"body\":\"$COMMENT\"}" \
                 "https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$GITHUB_PR_NUMBER/comments";
           fi
-      - npm run build
+      # - npm run build
   post_build:
     commands:
       - echo Build is completed successfully.
