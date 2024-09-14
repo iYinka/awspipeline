@@ -35,7 +35,8 @@ phases:
           echo "PR Number: $GITHUB_PR_NUMBER"
         fi
       - echo "Repository: $CODEBUILD_SOURCE_REPO_URL"
-      - GITHUB_REPOSITORY=$(basename -s .git $CODEBUILD_SOURCE_REPO_URL)
+      - |
+        GITHUB_REPOSITORY=$(basename -s .git $CODEBUILD_SOURCE_REPO_URL)
       - echo "Repository: $GITHUB_REPOSITORY"
 
       - echo Commenting on PR based on coverage...
