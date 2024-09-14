@@ -13,7 +13,6 @@ phases:
     commands:
       - echo Installing dependencies...
       - npm install
-
   pre_build:
     commands:
       - echo Running lint...
@@ -21,46 +20,38 @@ phases:
 
   build:
     commands:
-      - echo Running unit tests with coverage.....
-      - |
-        npm run test -- --coverage --coverageReporters=text-summary --watchAll=false | tee coverage.txt
-      - echo "Extracting coverage percentage..."
-      - |
-        COVERAGE=$(grep -oP 'All files.*\K\d+(\.\d+)?(?=%)' coverage.txt)
-        echo "Coverage: $COVERAGE%"
-
       - echo "Extracting PR number from CodeBuild environment..."
       - |
         if [[ $CODEBUILD_SOURCE_VERSION == pr/* ]]; then
           GITHUB_PR_NUMBER=$(echo $CODEBUILD_SOURCE_VERSION | grep -oP '\d+')
           echo "PR Number: $GITHUB_PR_NUMBER"
         fi
-
       - echo "Repository: $CODEBUILD_SOURCE_REPO_URL"
       - GITHUB_REPOSITORY=$(basename -s .git $CODEBUILD_SOURCE_REPO_URL)
       - echo "Repository: $GITHUB_REPOSITORY"
-
-      - echo Commenting on PR based on coverage...
+      - echo Running unit tests with coverage.....
+      - npm run test -- --coverage --coverageReporters=text-summary --watchAll=false
+      - echo Comment on PR
       - |
         if (( $(echo "$COVERAGE < $COVERAGE_THRESHOLD" | bc -l) )); then
-          echo "Coverage is less than $COVERAGE_THRESHOLD%, failing the build...";
-          COMMENT="Coverage is $COVERAGE%, which is below the $COVERAGE_THRESHOLD% threshold.";
-          curl -H "Authorization: token $GITHUB_TOKEN" \
-               -H "Content-Type: application/json" \
-               -X POST \
-               -d "{\"body\":\"$COMMENT\"}" \
-               "https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$GITHUB_PR_NUMBER/comments";
-          exit 1;
-        else
-          echo "Coverage is above $COVERAGE_THRESHOLD%, proceeding...";
-          COMMENT="Coverage is $COVERAGE%, build successful.";
-          curl -H "Authorization: token $GITHUB_TOKEN" \
-               -H "Content-Type: application/json" \
-               -X POST \
-               -d "{\"body\":\"$COMMENT\"}" \
-               "https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$GITHUB_PR_NUMBER/comments";
-        fi
-
+            echo "Coverage is less than $COVERAGE_THRESHOLD%, failing the build...";
+            COMMENT="Coverage is $COVERAGE%, which is below the $COVERAGE_THRESHOLD% threshold.";
+            curl -H "Authorization: token $GITHUB_TOKEN" \
+                -H "Content-Type: application/json" \
+                -X POST \
+                -d "{\"body\":\"$COMMENT\"}" \
+                "https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$GITHUB_PR_NUMBER/comments";
+            exit 1;
+          else
+            echo "Coverage is above $COVERAGE_THRESHOLD%, proceeding...";
+            COMMENT="Coverage is $COVERAGE%, build successful.";
+            curl -H "Authorization: token $GITHUB_TOKEN" \
+                -H "Content-Type: application/json" \
+                -X POST \
+                -d "{\"body\":\"$COMMENT\"}" \
+                "https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$GITHUB_PR_NUMBER/comments";
+          fi
+      - npm run build
   post_build:
     commands:
       - echo Build is completed successfully.
@@ -68,4 +59,6 @@ phases:
 artifacts:
   files:
     - "**/*"
+  # base-directory: build
   discard-paths: no
+
