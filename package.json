@@ -6,6 +6,7 @@
     "scripts": {
         "start": "node App.js",
         "test": "jest",
+        "build": "babel src --out-dir lib",
         "coverage": "jest npm test  --coverage --watchAll=false",
         "lint": "eslint ."
     },
