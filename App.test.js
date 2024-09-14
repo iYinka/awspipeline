@@ -1,68 +1,292 @@
 const request = require("supertest");
-const express = require("express");
+const app = require("./App.js"); // Import the app instance
 
-const app = express();
-
-// Middleware to parse request body
-app.use(express.urlencoded({ extended: false }));
-
-let blogList = [];
-
-// Routes
-app.get("/", (req, res) => {
-    res.status(200).send("Index Page");
-});
-
-app.get("/home", (req, res) => {
-    res.status(200).json(blogList);
-});
-
-app.post("/home", (req, res) => {
-    const blogTitle = req.body.blogTitle;
-    const blogDescription = req.body.blogDes;
-    blogList.push({
-        id: Date.now(), // Simulate generateID
-        title: blogTitle,
-        description: blogDescription,
-    });
-    res.status(200).json(blogList);
-});
-
-// Tests
 describe("Express App", () => {
+    let originalDateNow;
+    let server = 3001;
+
+    beforeAll(done => {
+        originalDateNow = Date.now;
+        Date.now = jest.fn(() => 1234567890);
+         server = app.listen(3001, () => {
+             // Use a different port to avoid conflicts
+             console.log("Test server running on port 3001");
+             done();
+         });
+    });
+
+    afterAll(done => {
+        Date.now = originalDateNow;
+    if (server) {
+                server.close(() => {
+                    console.log("Test server closed");
+                    done();
+                });
+            } else {
+                done();
+            }
+    });
+
     afterEach(() => {
-        // Reset blogList after each test
-        blogList = [];
+        jest.clearAllTimers(); // Clears all timers
+    });
+
+    // Your tests go here
+
+    test("GET /health returns 200", async () => {
+        const response = await request(server).get("/health");
+        expect(response.status).toBe(200);
+        expect(response.text).toBe("Healthy");
+    });
+
+    it("should render the index page", async () => {
+        const res = await request(server).get("/");
+        expect(res.statusCode).toEqual(200);
+        expect(res.text).toContain("<title>Blog App</title>"); // Adjust as needed
     });
 
     it("should render the index page", async () => {
         const res = await request(app).get("/");
         expect(res.statusCode).toEqual(200);
-        expect(res.text).toContain("Index Page");
+
+        // Check that the response contains the expected title or any unique content of the index page
+        expect(res.text).toContain("<title>Blog App</title>"); // Or any unique title/content on your index page
+
+        // Alternatively, check for an element that is definitely on the page
+        expect(res.text).toContain('<h1><a href="#">myDaily Blog</a></h1>'); // Adjust this to something unique to your index.ejs file
     });
 
     it("should render the home page with an empty blog list", async () => {
         const res = await request(app).get("/home");
         expect(res.statusCode).toEqual(200);
-        expect(res.body).toEqual([]);
+        expect(res.text).toContain("You don't have any blogs yet"); // Check for empty blog message
     });
 
-    // it("should add a new blog and render the home page with the updated blog list", async () => {
-    //     const blog = {
-    //         blogTitle: "Test Blog",
-    //         blogDes: "This is a test blog description",
-    //     };
+    it("should add a new blog and render the home page with the updated blog list", async () => {
+        const blog = {
+            blogTitle: "Test Blog",
+            blogDes: "This is a test blog description.....",
+        };
 
-    //     const res = await request(app).post("/home").send(blog);
+        const res = await request(app).post("/home").type("form").send(blog);
 
-    //     console.log(res.body); // Log the response body to see what the actual output is
+        expect(res.statusCode).toEqual(302); // Check for redirect
+        expect(res.header.location).toBe("/home");
 
-    //     expect(res.statusCode).toEqual(200);
-    //     expect(res.body.length).toBe(1);
-    //     expect(res.body[0]).toMatchObject({
-    //         id: Date.now(), // Simulate generateID
-    //         title: blog.blogTitle,
-    //         description: blog.blogDes,
+        // Verify the blog is added
+        const homeRes = await request(app).get("/home");
+        expect(homeRes.statusCode).toEqual(200);
+        expect(homeRes.text).toContain(blog.blogTitle); // Verify the title is displayed
+        expect(homeRes.text).toContain(blog.blogDes.slice(0, 300)); // Verify a snippet of the description is displayed
+    });
+
+    it("should return a 400 error if blog title or description is missing", async () => {
+        const resWithoutTitle = await request(app).post("/home").send({
+            blogDes: "Missing title",
+        });
+
+        expect(resWithoutTitle.statusCode).toEqual(400); // Check for error
+        expect(resWithoutTitle.text).toContain(
+            "Missing blog title or description"
+        );
+
+        const resWithoutDescription = await request(app).post("/home").send({
+            blogTitle: "Missing description",
+        });
+
+        expect(resWithoutDescription.statusCode).toEqual(400); // Check for error
+        expect(resWithoutDescription.text).toContain(
+            "Missing blog title or description"
+        );
+    });
+
+    it("should delete a blog by ID and redirect to /home", async () => {
+        // Step 1: Add a blog to delete
+        let res = await request(app).post("/home").type("form").send({
+            blogTitle: "Blog to Delete",
+            blogDes: "Description to delete",
+        });
+
+        // Step 2: Capture the newly added blog ID (assuming Date.now() is used for IDs)
+        const addedBlogId = 1234567890; // Replace with actual logic if ID is dynamic
+
+        // Step 3: Delete the blog using the captured ID
+        res = await request(app).post(`/delete/${addedBlogId}`);
+
+        // Step 4: Check that the deletion was successful (status 302 for redirect)
+        expect(res.statusCode).toBe(302);
+        expect(res.headers.location).toBe("/home");
+
+        // Step 5: Verify that the blog no longer exists
+        res = await request(app).get("/home");
+        expect(res.text).not.toContain("Blog to Delete");
+    });
+
+    it("should render blog details if the blog exists", async () => {
+        // Add a blog
+        await request(app)
+            .post("/home")
+            .type("form")
+            .send({ blogTitle: "Blog Title", blogDes: "Blog Description" });
+
+        // Request blog details by ID
+        const res = await request(app).get("/blogDetails/1234567890");
+
+        // Check the response contains the correct blog details
+        expect(res.statusCode).toBe(200);
+        expect(res.text).toContain("Blog Title");
+        expect(res.text).toContain("Blog Description");
+    });
+
+    it("should return 404 if the blog does not exist", async () => {
+        const res = await request(app).get("/blogDetails/9999"); // Non-existent blog ID
+
+        // Check that a 404 status is returned
+        expect(res.statusCode).toBe(404);
+        expect(res.text).toContain("Blog not found");
+    });
+
+    // it("should render the edit blog page for an existing blog", async () => {
+    //     // Step 1: Add a blog
+    //     let res = await request(app).post("/home").type("form").send({
+    //         blogTitle: "Blog to Edit",
+    //         blogDes: "Original Description",
     //     });
+
+    //     // Step 2: Capture the blog ID from the response
+    //     const addedBlogId = res.body[0].id; // Assuming the added blog is returned in the body
+
+    //     // Step 3: Request the edit page for the blog by the captured ID
+    //     res = await request(app).get(`/edit/${addedBlogId}`);
+
+    //     // Step 4: Check that the edit page renders and contains the blog's current details
+    //     expect(res.statusCode).toBe(200);
+    //     expect(res.text).toContain("Blog to Edit");
+    //     expect(res.text).toContain("Original Description");
     // });
+
+    it("should return 404 when trying to edit a non-existent blog", async () => {
+        const res = await request(app).get("/edit/9999"); // Non-existent blog ID
+
+        // Check that a 404 status is returned
+        expect(res.statusCode).toBe(404);
+        expect(res.text).toContain("Blog not found");
+    });
+
+    // it("should update an existing blog and redirect to /home", async () => {
+    //     // Step 1: Add a blog to update
+    //     await request(app).post("/home").type("form").send({
+    //         blogTitle: "Original Title",
+    //         blogDes: "Original Description",
+    //     });
+
+    //     // Step 2: Get the newly added blog's ID by fetching the /home route
+    //     let homeRes = await request(app).get("/home");
+    //     const addedBlogId = homeRes.body[0].id; // Capture the ID of the first blog
+
+    //     // Step 3: Update the blog using the captured ID
+    //     const res = await request(app)
+    //         .post(`/edit/${addedBlogId}`) // Use the captured ID
+    //         .type("form")
+    //         .send({
+    //             blogTitle: "Updated Title",
+    //             blogDes: "Updated Description",
+    //         });
+
+    //     // Step 4: Check for redirect after update
+    //     expect(res.statusCode).toBe(302);
+    //     expect(res.headers.location).toBe("/home");
+
+    //     // Step 5: Verify the blog was updated by checking the /home response again
+    //     homeRes = await request(app).get("/home");
+    //     const updatedBlog = homeRes.body.find(
+    //         (blog) => blog.id === addedBlogId
+    //     ); // Find the blog by ID
+    //     expect(updatedBlog.title).toBe("Updated Title");
+    //     expect(updatedBlog.description).toBe("Updated Description");
+    // });
+
+    it("should return 404 when updating a non-existent blog", async () => {
+        const res = await request(app)
+            .post("/edit/9999") // Non-existent blog ID
+            .type("form")
+            .send({
+                blogTitle: "Updated Title",
+                blogDes: "Updated Description",
+            });
+
+        // Check that a 404 status is returned
+        expect(res.statusCode).toBe(404);
+        expect(res.text).toContain("Blog not found");
+    });
 });
+
+// import request from "supertest";
+// import app from "./App.js"; // Import the app instance
+
+// describe("Express App", () => {
+//     let originalDateNow;
+
+//     beforeAll(() => {
+//         originalDateNow = Date.now;
+//         Date.now = jest.fn(() => 1234567890);
+//     });
+
+//     afterAll(() => {
+//         Date.now = originalDateNow;
+//     });
+
+//     afterEach(() => {
+//         // Reset blogList after each test
+//         // Since blogList is in memory, it gets reset automatically for each test run.
+//     });
+
+//     it("should render the index page", async () => {
+//         const res = await request(app).get("/");
+//         expect(res.statusCode).toEqual(200);
+//         expect(res.text).toContain("Home"); // Adjust based on your index.ejs
+//     });
+
+//     it("should render the home page with an empty blog list", async () => {
+//         const res = await request(app).get("/home");
+//         expect(res.statusCode).toEqual(200);
+//         expect(res.text).toContain("No blogs available"); // Adjust based on your home.ejs
+//     });
+
+//     it("should add a new blog and redirect to home page", async () => {
+//         const blog = {
+//             blogTitle: "Test Blog",
+//             blogDes: "This is a test blog description.....",
+//         };
+
+//         const res = await request(app).post("/home").type("form").send(blog);
+
+//         expect(res.statusCode).toEqual(302); // Check for redirect
+//         expect(res.header.location).toBe("/home");
+
+//         // Verify the blog is added
+//         const homeRes = await request(app).get("/home");
+//         expect(homeRes.statusCode).toEqual(200);
+//         expect(homeRes.text).toContain(blog.blogTitle);
+//     });
+
+//     it("should return a 400 error if blog title or description is missing", async () => {
+//         const resWithoutTitle = await request(app).post("/home").send({
+//             blogDes: "Missing title",
+//         });
+
+//         expect(resWithoutTitle.statusCode).toEqual(400); // Check for error
+//         expect(resWithoutTitle.text).toContain(
+//             "Missing blog title or description"
+//         );
+
+//         const resWithoutDescription = await request(app).post("/home").send({
+//             blogTitle: "Missing description",
+//         });
+
+//         expect(resWithoutDescription.statusCode).toEqual(400); // Check for error
+//         expect(resWithoutDescription.text).toContain(
+//             "Missing blog title or description"
+//         );
+//     });
+// });

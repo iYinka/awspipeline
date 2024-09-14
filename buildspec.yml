@@ -4,15 +4,13 @@ env:
   variables:
     COVERAGE_THRESHOLD: 80
     NODE_ENV: test
-  # secrets-manager:
-  #   GITHUB_TOKEN: gitcodebuild
-  #   REPO_NAME: iyinka/awspipeline
 
 phases:
   install:
     commands:
       - echo Installing dependencies...
       - npm install
+
   pre_build:
     commands:
       - echo Running lint...
@@ -20,29 +18,46 @@ phases:
 
   build:
     commands:
-      - echo Running unit tests with coverage.....
+      - echo Running unit tests with coverage...
       - npm run test -- --coverage --coverageReporters=text-summary --watchAll=false
-      - echo Comment on PR
+
+      # Extract the coverage percentage
+      - echo Fetching coverage percentage...
       - |
-        if (( $(echo "$COVERAGE < $COVERAGE_THRESHOLD" | bc -l) )); then
-            echo "Coverage is less than $COVERAGE_THRESHOLD%, failing the build...";
-            COMMENT="Coverage is $COVERAGE%, which is below the $COVERAGE_THRESHOLD% threshold.";
+        COVERAGE=$(grep -oP 'Statements\s+\d+(\.\d+)?%' coverage/coverage-summary.txt | awk '{print $2}' | sed 's/%//')
+        echo "Coverage: $COVERAGE%"
+
+      # Extract commit ID and repository name
+      - echo Commit ID: $CODEBUILD_SOURCE_VERSION
+      - echo Repository URL: $CODEBUILD_SOURCE_REPO_URL
+      - |
+        REPO_NAME=$(echo $CODEBUILD_SOURCE_REPO_URL | awk -F'/' '{print $NF}' | sed 's/.git//')
+        echo "Repository Name: $REPO_NAME"
+
+      # Post coverage results as a comment on PR
+      - echo Comment on PR...
+      - |
+        if [ $(echo "$COVERAGE < $COVERAGE_THRESHOLD" | bc -l) -eq 1 ]; then
+            echo "Coverage is less than $COVERAGE_THRESHOLD%, failing the build..."
+            COMMENT="Coverage is $COVERAGE%, which is below the $COVERAGE_THRESHOLD% threshold."
             curl -H "Authorization: token $GITHUB_TOKEN" \
                 -H "Content-Type: application/json" \
                 -X POST \
                 -d "{\"body\":\"$COMMENT\"}" \
-                "https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$GITHUB_PR_NUMBER/comments";
-            exit 1;
-          else
-            echo "Coverage is above $COVERAGE_THRESHOLD%, proceeding...";
-            COMMENT="Coverage is $COVERAGE%, build successful.";
+                "https://api.github.com/repos/$REPO_NAME/issues/$CODEBUILD_SOURCE_VERSION/comments"
+            exit 1
+        else
+            echo "Coverage is above $COVERAGE_THRESHOLD%, proceeding..."
+            COMMENT="Coverage is $COVERAGE%, build successful."
             curl -H "Authorization: token $GITHUB_TOKEN" \
                 -H "Content-Type: application/json" \
                 -X POST \
                 -d "{\"body\":\"$COMMENT\"}" \
-                "https://api.github.com/repos/$GITHUB_REPOSITORY/issues/$GITHUB_PR_NUMBER/comments";
-          fi
+                "https://api.github.com/repos/$REPO_NAME/issues/$CODEBUILD_SOURCE_VERSION/comments"
+        fi
+
       - npm run build
+
   post_build:
     commands:
       - echo Build is completed successfully.
@@ -50,6 +65,4 @@ phases:
 artifacts:
   files:
     - "**/*"
-  # base-directory: build
   discard-paths: no
-

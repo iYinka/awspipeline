@@ -1,119 +1,80 @@
-import express from "express";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
-import bodyParser from "body-parser";
-import { __express as ejs } from "ejs";
-
+const express = require("express");
+const path = require("path");
+const bodyParser = require("body-parser");
+const { __express: ejs } = require("ejs");
 const app = express();
 const port = 3000;
-
 // Configure Express middleware
-app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: false }));
-
-// Enable EJS module
+// Set up EJS as the templating engine
 app.set("view engine", "ejs");
 app.engine("ejs", ejs);
-
-
-// Define paths to view files
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const indexPath = join(__dirname, "index.ejs");
-const homePath = join(__dirname, "views/home.ejs");
-const blogDetailsPath = join(__dirname, "views/blogDetails.ejs");
-
+const paths = {
+    index: path.join(__dirname, "index.ejs"),
+    home: path.join(__dirname, "views/home.ejs"),
+    blogDetails: path.join(__dirname, "views/blogDetails.ejs"),
+};
 // Initialize blog list
 let blogList = [];
-
-
-// AWS Health Check
-// Health check route..............
-app.get("/health", (req, res) => {
-  res.status(200).send("Healthy");
-});
-
-
+app.use(express.static(path.join(__dirname, "public")));
+// Health check route
+app.get("/health", (req, res) => res.status(200).send("Healthy"));
 // Render index page
-app.get("/", (req, res) => {
-  res.render(indexPath);
-});
-
+app.get("/", (req, res) => res.render(paths.index));
 // Render home page with blog list
-app.get("/home", (req, res) => {
-  res.render(homePath, {
-    blogList: blogList,
-  });
-});
-
+app.get("/home", (req, res) => res.render(paths.home, { blogList }));
 // Add new blog
 app.post("/home", (req, res) => {
-  const blogTitle = req.body.blogTitle;
-  const blogDescription = req.body.blogDes;
-  blogList.push({
-    id: generateID(),
-    title: blogTitle,
-    description: blogDescription,
-  });
-  res.render(homePath, {
-    blogList: blogList,
-  });
+    const { blogTitle, blogDes } = req.body;
+    if (!blogTitle || !blogDes) {
+        return res.status(400).send("Missing blog title or description");
+    }
+    blogList.push({
+        id: Date.now(),
+        title: blogTitle,
+        description: blogDes,
+    });
+    res.redirect("/home");
 });
-
 // Delete a blog
 app.post("/delete/:id", (req, res) => {
-  const blogId = req.params.id;
-  blogList = blogList.filter((blog) => blog.id !== parseInt(blogId));
-  res.send(
-    '<script>alert("Blog deleted successfully"); window.location="/home";</script>'
-  );
-  res.redirect("/home");
+    const blogId = parseInt(req.params.id, 10);
+    blogList = blogList.filter((blog) => blog.id !== blogId);
+    res.redirect("/home");
 });
-
-// Render blog details page....
+// Render blog details page
 app.get("/blogDetails/:id", (req, res) => {
-  const blogId = req.params.id;
-  const blogDetails = blogList.find((blog) => blog.id === parseInt(blogId));
-  res.render(blogDetailsPath, {
-    blogDetails: blogDetails,
-  });
+    const blogId = parseInt(req.params.id, 10);
+    const blogDetails = blogList.find((blog) => blog.id === blogId);
+    if (!blogDetails) {
+        return res.status(404).send("<h1>Blog not found</h1>");
+    }
+    res.render(paths.blogDetails, { blogDetails });
 });
-
 // Render edit blog page
 app.get("/edit/:id", (req, res) => {
-  const blogId = req.params.id;
-  const blogDetails = blogList.find((blog) => blog.id === parseInt(blogId));
-  res.render(indexPath, {
-    isEdit: true,
-    blogDetails: blogDetails,
-  });
+    const blogId = parseInt(req.params.id, 10);
+    const blogDetails = blogList.find((blog) => blog.id === blogId);
+    if (!blogDetails) {
+        return res.status(404).send("<h1>Blog not found</h1>");
+    }
+    res.render(paths.index, { isEdit: true, blogDetails });
 });
-
 // Update blog
 app.post("/edit/:id", (req, res) => {
-  const blogId = req.params.id;
-  const editBlog = blogList.findIndex((blog) => blog.id === parseInt(blogId));
-  if (editBlog === -1) {
-    res.send("<h1> Something went wrong </h1>");
-  }
-  const updatedTitle = req.body.blogTitle;
-  const updatedDescription = req.body.blogDes;
-
-  const blogTitle = (blogList[editBlog].title = updatedTitle);
-  const blogDescription = (blogList[editBlog].description = updatedDescription);
-  [...blogList, { blogTitle: blogTitle, blogDescription: blogDescription }];
-
-  res.render(homePath, {
-    isEdit: true,
-    blogList: blogList,
-  });
+    const blogId = parseInt(req.params.id, 10);
+    const { blogTitle: updatedTitle, blogDes: updatedDescription } = req.body;
+    const blogIndex = blogList.findIndex((blog) => blog.id === blogId);
+    if (blogIndex === -1) {
+        return res.status(404).send("<h1>Blog not found</h1>");
+    }
+    blogList[blogIndex] = {
+        ...blogList[blogIndex],
+        title: updatedTitle,
+        description: updatedDescription,
+    };
+    res.redirect("/home");
 });
-
 // Start the server
-app.listen(port, () => {
-  console.log(`Listening on port ${port}`);
-});
-
-// Function to generate random ID
-function generateID() {
-  return Math.floor(Math.random() * 10000);
-}
+app.listen(port, () => console.log(`Listening on port ${port}`));
+module.exports = app; // Export app for testing

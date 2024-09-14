@@ -3,42 +3,57 @@
     "version": "1.0.0",
     "description": "AWS CICD using Elastic Beanstalk, CodeBuild and CodePipeline",
     "main": "App.js",
-    "type": "module",
     "scripts": {
         "start": "node App.js",
         "test": "jest",
-        "build": "babel src --out-dir lib",
-        "coverage": "nyc npm test -- --coverage --watchAll=false",
+        "coverage": "jest npm test  --coverage --watchAll=false",
         "lint": "eslint ."
     },
-    "nyc": {
-        "threshold": {
-            "branches": 80,
-            "functions": 80,
-            "lines": 80,
-            "statements": 80
-        }
+    "jest": {
+        "collectCoverage": true,
+        "collectCoverageFrom": [
+            "App.js",
+            "!**/node_modules/**",
+            "!**/vendor/**"
+        ],
+        "coverageDirectory": "coverage",
+        "coverageReporters": [
+            "json",
+            "html",
+            "text"
+        ],
+        "testEnvironment": "node",
+        "coverageThreshold": {
+            "global": {
+                "branches": 80,
+                "functions": 80,
+                "lines": 80,
+                "statements": 80
+            }
+        },
+        "transform": {
+            "^.+\\.m?js$": "babel-jest"
+        },
+        "watch": false
     },
-    "author": "",
-    "license": "ISC",
     "dependencies": {
-        "@babel/cli": "^7.24.8",
-        "@babel/core": "^7.25.2",
-        "@babel/eslint-parser": "^7.25.1",
-        "@babel/preset-env": "^7.25.4",
-        "@babel/preset-react": "^7.24.7",
         "body-parser": "^1.20.2",
         "crypto": "^1.0.1",
         "ejs": "^3.1.10",
         "express": "^4.19.2"
     },
     "devDependencies": {
+        "@babel/cli": "^7.24.8",
+        "@babel/core": "^7.25.2",
+        "@babel/eslint-parser": "^7.25.1",
+        "@babel/preset-env": "^7.25.4",
+        "@babel/preset-react": "^7.24.7",
+        "babel-jest": "^29.7.0",
         "@eslint/js": "^9.9.1",
         "eslint": "^8.57.0",
         "eslint-config-standard": "^17.1.0",
         "globals": "^15.9.0",
         "jest": "^29.7.0",
-        "nyc": "^17.0.0",
         "supertest": "^7.0.0"
     }
 }
