@@ -8,12 +8,12 @@ env:
 phases:
   install:
     commands:
-      - echo Installing dependencies....
+      - echo Installing dependencies.......
       - npm install
 
   pre_build:
     commands:
-      - echo Running lint...
+      - echo Running lint.......
       - npm run lint
 
   build:
@@ -23,16 +23,14 @@ phases:
 
       # Extract the coverage percentage
       - echo Fetching coverage percentage...
-      - |
-        COVERAGE=$(grep -oP 'Statements\s+\d+(\.\d+)?%' coverage/coverage-summary.txt | awk '{print $2}' | sed 's/%//')
-        echo "Coverage: $COVERAGE%"
+      - COVERAGE=$(grep -oP 'Statements\s+\d+(\.\d+)?%' coverage/coverage-summary.txt | awk '{print $2}' | sed 's/%//')
+      - echo "Coverage: $COVERAGE%"
 
       # Extract commit ID and repository name
       - echo Commit ID: $CODEBUILD_SOURCE_VERSION
       - echo Repository URL: $CODEBUILD_SOURCE_REPO_URL
-      - |
-        REPO_NAME=$(echo $CODEBUILD_SOURCE_REPO_URL | awk -F'/' '{print $NF}' | sed 's/.git//')
-        echo "Repository Name: $REPO_NAME"
+      - REPO_NAME=$(echo $CODEBUILD_SOURCE_REPO_URL | awk -F'/' '{print $NF}' | sed 's/.git//')
+      - echo "Repository Name: $REPO_NAME"
 
       # Post coverage results as a comment on PR
       - echo Comment on PR...
