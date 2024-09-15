@@ -1,0 +1,22 @@
+name: Create/Update PR
+
+on:
+  push:
+    branches:
+      - feature/*
+
+jobs:
+  create_pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Create or Update PR
+        uses: repo-sync/pull-request@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          source_branch: ${{ github.ref }}
+          destination_branch: main
+          pr_title: "Auto PR for branch ${{ github.ref }}"
+          pr_body: "This PR has been automatically created or updated for branch ${{ github.ref }}"
