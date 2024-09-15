@@ -127,21 +127,21 @@ describe("Express App", () => {
     //     expect(res.text).toContain("Blog Description");
     // });
 
-    // it("should return 404 if the blog does not exist", async () => {
-    //     const res = await request(app).get("/blogDetails/9999"); // Non-existent blog ID
+    it("should return 404 if the blog does not exist", async () => {
+        const res = await request(app).get("/blogDetails/9999"); // Non-existent blog ID
 
-    //     // Check that a 404 status is returned
-    //     expect(res.statusCode).toBe(404);
-    //     expect(res.text).toContain("Blog not found");
-    // });
+        // Check that a 404 status is returned
+        expect(res.statusCode).toBe(404);
+        expect(res.text).toContain("Blog not found");
+    });
 
-    // it("should return 404 when trying to edit a non-existent blog", async () => {
-    //     const res = await request(app).get("/edit/9999"); // Non-existent blog ID
+    it("should return 404 when trying to edit a non-existent blog", async () => {
+        const res = await request(app).get("/edit/9999"); // Non-existent blog ID
 
-    //     // Check that a 404 status is returned
-    //     expect(res.statusCode).toBe(404);
-    //     expect(res.text).toContain("Blog not found");
-    // });
+        // Check that a 404 status is returned
+        expect(res.statusCode).toBe(404);
+        expect(res.text).toContain("Blog not found");
+    });
 
     it("should return 404 when updating a non-existent blog", async () => {
         const res = await request(app)
