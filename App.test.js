@@ -14,11 +14,11 @@ describe("Express App", () => {
         server.close(); // Close the server to prevent Jest from hanging
     });
 
-    // test("GET /health returns 200", async () => {
-    //     const response = await request(app).get("/health");
-    //     expect(response.status).toBe(200);
-    //     expect(response.text).toBe("Healthy");
-    // });
+    test("GET /health returns 200", async () => {
+        const response = await request(app).get("/health");
+        expect(response.status).toBe(200);
+        expect(response.text).toBe("Healthy");
+    });
 
     // Your tests go here
 
